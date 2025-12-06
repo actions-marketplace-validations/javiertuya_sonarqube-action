@@ -1,6 +1,10 @@
 # action.yml
 name: 'SonarQube Maven Scan'
 description: 'Scans a java maven project with SonarQube, restores artifacts and checks quality gate'
+author: "Javier Tuya"
+branding:
+  icon: check-square
+  color: blue
 inputs:
   github-token:
     description: 'Token to access GitHub (needed to check the quality gate)'
@@ -13,13 +17,17 @@ inputs:
     required: false
     default: "https://sonarcloud.io"
   working-directory:
-    description: 'The name of the working directory from which the scan is executed'
+    description: 'The name of the working directory from which the scan is executed (where `sonar-project.properties` is located)'
+    required: false
+    default: "."
+  java-directory:
+    description: 'The name of the directory (relative to `working-directory`) where the java project is compiled (where `pom.xml` is located)'
     required: false
     default: "."
   java-version:
     description: 'Java version used to build the package'
     required: true
-    default: "11"
+    default: "17"
   # As actions do not support arrays, must duplicate the pairs artifact name/path
   restore-artifact-name1:
     description: 'Optional name of an artifact to be restored to send additional info to SonarQube (e.g. coverage reports)'
@@ -37,28 +45,60 @@ inputs:
     description: 'Path where `restore-artifact-name2` will be restored (relative to the working directory)'
     required: false
     default: "."
+  restore-artifact-name3:
+    description: 'Optional name of an a third artifact to be restored to send additional info to SonarQube'
+    required: false
+    default: ""
+  restore-artifact-path3:
+    description: 'Path where `restore-artifact-name3` will be restored (relative to the working directory)'
+    required: false
+    default: "."
+  restore-artifact-name4:
+    description: 'Optional name of an a fourth artifact to be restored to send additional info to SonarQube'
+    required: false
+    default: ""
+  restore-artifact-path4:
+    description: 'Path where `restore-artifact-name4` will be restored (relative to the working directory)'
+    required: false
+    default: "."
+  restore-artifact-name5:
+    description: 'Optional name of an a third artifact to be restored to send additional info to SonarQube'
+    required: false
+    default: ""
+  restore-artifact-path5:
+    description: 'Path where `restore-artifact-name5` will be restored (relative to the working directory)'
+    required: false
+    default: "."
+  restore-artifact-name6:
+    description: 'Optional name of an a fourth artifact to be restored to send additional info to SonarQube'
+    required: false
+    default: ""
+  restore-artifact-path6:
+    description: 'Path where `restore-artifact-name6` will be restored (relative to the working directory)'
+    required: false
+    default: "."
 
 runs:
   using: "composite"
   steps:
     #Recommended Sonarcloud configuration
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v5
       with:
         fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-    - name: Set up JDK (minimum 11)
-      uses: actions/setup-java@v3
+    - name: Set up JDK (minimum 17 for SonarCloud)
+      uses: actions/setup-java@v5
       with:
         distribution: 'temurin'
         java-version: ${{ inputs.java-version }}
         cache: 'maven'
     - name: Cache SonarCloud packages
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.sonar/cache
         key: ${{ runner.os }}-sonar
         restore-keys: ${{ runner.os }}-sonar
     - name: Cache Maven packages
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
@@ -67,35 +107,61 @@ runs:
     #Compile and restore reports
     - name: Generate classes
       shell: bash
-      working-directory: ${{ inputs.working-directory }}
+      working-directory: ${{ inputs.working-directory }}/${{ inputs.java-directory }}
       run: mvn test-compile -U --no-transfer-progress
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }} # needed if using github packages
 
     - name: Restore test reports
       if: inputs.restore-artifact-name1 != ''
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v6.0.0
       with:
         name: ${{ inputs.restore-artifact-name1 }}
         path: ${{ inputs.working-directory }}/${{ inputs.restore-artifact-path1 }}
     - name: Restore test reports
       if: inputs.restore-artifact-name2 != ''
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v6.0.0
       with:
         name: ${{ inputs.restore-artifact-name2 }}
         path: ${{ inputs.working-directory }}/${{ inputs.restore-artifact-path2 }}
+    - name: Restore test reports
+      if: inputs.restore-artifact-name3 != ''
+      uses: actions/download-artifact@v6.0.0
+      with:
+        name: ${{ inputs.restore-artifact-name3 }}
+        path: ${{ inputs.working-directory }}/${{ inputs.restore-artifact-path3 }}
+    - name: Restore test reports
+      if: inputs.restore-artifact-name4 != ''
+      uses: actions/download-artifact@v6.0.0
+      with:
+        name: ${{ inputs.restore-artifact-name4 }}
+        path: ${{ inputs.working-directory }}/${{ inputs.restore-artifact-path4 }}
+    - name: Restore test reports
+      if: inputs.restore-artifact-name5 != ''
+      uses: actions/download-artifact@v6.0.0
+      with:
+        name: ${{ inputs.restore-artifact-name5 }}
+        path: ${{ inputs.working-directory }}/${{ inputs.restore-artifact-path5 }}
+    - name: Restore test reports
+      if: inputs.restore-artifact-name6 != ''
+      uses: actions/download-artifact@v6.0.0
+      with:
+        name: ${{ inputs.restore-artifact-name6 }}
+        path: ${{ inputs.working-directory }}/${{ inputs.restore-artifact-path6 }}
 
     # Manual exeuction, maven plugin does not read sonar-project.properties nor .sonarcloud.properties
     # Keeps independent from the pom.xml
     - name: Download SonarScanner
       shell: bash
       working-directory: ${{ inputs.working-directory }}
-      run: curl --insecure -o ./sonarscanner.zip -L https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.8.0.2856-linux.zip && unzip -q sonarscanner.zip
+      run: curl --insecure -o ./sonarscanner.zip -L https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-7.1.0.4889-linux-x64.zip && unzip -q sonarscanner.zip
     - name: SonarQube Analysis
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}  # Needed to get PR information, if any
         SONAR_TOKEN: ${{ inputs.sonar-token }}
       shell: bash
       working-directory: ${{ inputs.working-directory }}
-      run: sonar-scanner-4.8.0.2856-linux/bin/sonar-scanner -Dsonar.host.url=${{ inputs.sonar-host-url }}
+      run: ./sonar-scanner-7.1.0.4889-linux-x64/bin/sonar-scanner -Dsonar.host.url=${{ inputs.sonar-host-url }}
     #Option using the official action (analysis takes more time)
     #- name: SonarQube Scan
     #  uses: sonarsource/sonarqube-scan-action@v1.2.0
@@ -106,7 +172,7 @@ runs:
     #    SONAR_HOST_URL: "https://sonarcloud.io"
 
     - name: SonarQube Quality Gate check
-      uses: sonarsource/sonarqube-quality-gate-action@v1.1.0
+      uses: sonarsource/sonarqube-quality-gate-action@v1.2.0
       #timeout not allowed in an action, if needed, set timeout when calling this action
       #timeout-minutes: 5
       env:
