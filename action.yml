@@ -62,7 +62,7 @@ inputs:
     required: false
     default: "."
   restore-artifact-name5:
-    description: 'Optional name of an a third artifact to be restored to send additional info to SonarQube'
+    description: 'Optional name of an a fifth artifact to be restored to send additional info to SonarQube'
     required: false
     default: ""
   restore-artifact-path5:
@@ -70,11 +70,27 @@ inputs:
     required: false
     default: "."
   restore-artifact-name6:
-    description: 'Optional name of an a fourth artifact to be restored to send additional info to SonarQube'
+    description: 'Optional name of an a sixth artifact to be restored to send additional info to SonarQube'
     required: false
     default: ""
   restore-artifact-path6:
     description: 'Path where `restore-artifact-name6` will be restored (relative to the working directory)'
+    required: false
+    default: "."
+  restore-artifact-name7:
+    description: 'Optional name of an a seventh artifact to be restored to send additional info to SonarQube'
+    required: false
+    default: ""
+  restore-artifact-path7:
+    description: 'Path where `restore-artifact-name7` will be restored (relative to the working directory)'
+    required: false
+    default: "."
+  restore-artifact-name8:
+    description: 'Optional name of an a eighth artifact to be restored to send additional info to SonarQube'
+    required: false
+    default: ""
+  restore-artifact-path8:
+    description: 'Path where `restore-artifact-name8` will be restored (relative to the working directory)'
     required: false
     default: "."
 
@@ -148,6 +164,18 @@ runs:
       with:
         name: ${{ inputs.restore-artifact-name6 }}
         path: ${{ inputs.working-directory }}/${{ inputs.restore-artifact-path6 }}
+    - name: Restore test reports
+      if: inputs.restore-artifact-name7 != ''
+      uses: actions/download-artifact@v6.0.0
+      with:
+        name: ${{ inputs.restore-artifact-name7 }}
+        path: ${{ inputs.working-directory }}/${{ inputs.restore-artifact-path7 }}
+    - name: Restore test reports
+      if: inputs.restore-artifact-name8 != ''
+      uses: actions/download-artifact@v6.0.0
+      with:
+        name: ${{ inputs.restore-artifact-name8 }}
+        path: ${{ inputs.working-directory }}/${{ inputs.restore-artifact-path8 }}
 
     # Manual exeuction, maven plugin does not read sonar-project.properties nor .sonarcloud.properties
     # Keeps independent from the pom.xml
